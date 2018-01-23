@@ -5,8 +5,45 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MicroSpot"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
-    <Grid>
-        
-    </Grid>
+        Title="MicroSpot"
+        Height="80" Width="300" MinHeight="80" MinWidth="300" MaxHeight="80"
+        WindowStyle="None"
+        Topmost="True"
+        MouseLeftButtonDown="OnWindowMouseDown">
+    <WindowChrome.WindowChrome>
+        <WindowChrome 
+            CaptionHeight="0"
+            ResizeBorderThickness="5" />
+    </WindowChrome.WindowChrome>
+
+    <DockPanel Background="Black" LastChildFill="True">
+        <Image x:Name="TrackImage"
+               DockPanel.Dock="Left"  Height="80" Width="80"
+               Stretch="UniformToFill"/>
+        <UniformGrid DockPanel.Dock="Right" Rows="3">
+            <Button Click="OnBackClick"
+                    Background="Black"
+                    BorderThickness="0"
+                    Foreground="White">|&lt;</Button>
+            <Button Click="OnPlayPauseClick"
+                    Background="Black"
+                    BorderThickness="0"
+                    Foreground="White">||</Button>
+            <Button Click="OnNextClick"
+                    Background="Black"
+                    BorderThickness="0"
+                    Foreground="White">&gt;|</Button>
+        </UniformGrid>
+        <StackPanel>
+            <TextBlock x:Name="TrackTitle"
+                       Text="Title"
+                       Foreground="White" />
+            <TextBlock x:Name="TrackArtist"
+                       Text="Artist"
+                       Foreground="Gray" />
+        </StackPanel>
+    </DockPanel>
 </Window>
+
+
+
