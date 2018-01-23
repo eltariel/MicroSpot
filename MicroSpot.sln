@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2010
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroSpot", "MicroSpot\MicroSpot.csproj", "{1839AC2B-5F02-4238-A158-3D54F82A1155}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1839AC2B-5F02-4238-A158-3D54F82A1155}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1839AC2B-5F02-4238-A158-3D54F82A1155}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1839AC2B-5F02-4238-A158-3D54F82A1155}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1839AC2B-5F02-4238-A158-3D54F82A1155}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EFFCA9FF-5811-4F68-9AA1-021FB1DBC316}
+	EndGlobalSection
+EndGlobal
