@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using Newtonsoft.Json;
 using SpotifyAPI.Local;
 using SpotifyAPI.Local.Enums;
 using SpotifyAPI.Local.Models;
@@ -16,84 +13,95 @@ namespace MicroSpot
     public partial class MainWindow : Window
     {
         private readonly SpotifyLocalAPI spotify;
+        private Track currentTrack;
 
         public MainWindow()
         {
             InitializeComponent();
 
             spotify = new SpotifyLocalAPI();
-            if (!SpotifyLocalAPI.IsSpotifyRunning())
-                return; //Make sure the spotify client is running
-            if (!SpotifyLocalAPI.IsSpotifyWebHelperRunning())
-                return; //Make sure the WebHelper is running
+            if (!SpotifyLocalAPI.IsSpotifyRunning() ||
+                !SpotifyLocalAPI.IsSpotifyWebHelperRunning() ||
+                !spotify.Connect())
+            {
+                return;
+            }
 
-            if (!spotify.Connect())
-                return; //We need to call Connect before fetching infos, this will handle Auth stuff
-
-            var status = spotify.GetStatus(); //status contains infos
-            Debug.WriteLine($"Current status: {JsonConvert.SerializeObject(status)}");
+            var status = spotify.GetStatus();
             UpdateDisplay(status.Track);
 
             spotify.OnTrackChange += OnTrackChange;
             spotify.OnPlayStateChange += OnPlayStateChange;
+            spotify.OnTrackTimeChange += OnTrackTimeChange;
             spotify.ListenForEvents = true;
         }
 
-        protected override void OnMouseDown(MouseButtonEventArgs e)
+        private void OnPlayStateChange(object sender, PlayStateEventArgs e)
         {
-            base.OnMouseDown(e);
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(new Action(() => OnPlayStateChange(sender, e)));
+                return;
+            }
+
+            PlayButton.Content = spotify.GetStatus().Playing ? "||" : "|>";
         }
 
-        private void OnPlayStateChange(object sender, PlayStateEventArgs playStateEventArgs)
+        private void OnTrackChange(object sender, TrackChangeEventArgs e)
         {
-            Debug.WriteLine($"PlayState changed: {JsonConvert.SerializeObject(playStateEventArgs)}");
+            UpdateDisplay(e.NewTrack);
         }
 
-        private void OnTrackChange(object sender, TrackChangeEventArgs trackChangeEventArgs)
+        private void OnTrackTimeChange(object sender, TrackTimeChangeEventArgs e)
         {
-            Debug.WriteLine($"Track changed: {JsonConvert.SerializeObject(trackChangeEventArgs)}");
-            Dispatcher.BeginInvoke(new Action(() => { UpdateDisplay(trackChangeEventArgs.NewTrack); }));
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(new Action(() => OnTrackTimeChange(sender, e)));
+                return;
+            }
+
+            TrackTime.Text = $@"{TimeSpan.FromSeconds(e.TrackTime):m\:ss}/{TimeSpan.FromSeconds(currentTrack.Length):m\:ss}";
+            if (e.TrackTime < (currentTrack?.Length ?? 0))
+            {
+                TrackProgress.Value = (int) e.TrackTime;
+            }
         }
 
         private async void UpdateDisplay(Track track)
         {
-            TrackTitle.Text = track.TrackResource.Name;
-            TrackArtist.Text = track.ArtistResource.Name;
-            TrackImage.Source = track.AlbumResource != null ? (await track.GetAlbumArtAsync(AlbumArtSize.Size160)).ToBitmapSource() : null;
+            if (!Dispatcher.CheckAccess())
+            {
+                await Dispatcher.BeginInvoke(new Action(() => UpdateDisplay(track)));
+                return;
+            }
+
+            currentTrack = track;
+            TrackTitle.Text = track?.TrackResource.Name ?? "No track";
+            TrackArtist.Text = track?.ArtistResource.Name ?? string.Empty;
+            TrackImage.Source = track?.AlbumResource != null ? (await track.GetAlbumArtAsync(AlbumArtSize.Size160)).ToBitmapSource() : null;
+            TrackProgress.Maximum = track?.Length ?? 0;
         }
 
         private void OnBackClick(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn)
-            {
-                spotify.Previous();
-            }
+            spotify.Previous();
         }
 
         private async void OnPlayPauseClick(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn)
+            if (spotify.GetStatus().Playing)
             {
-                var status = spotify.GetStatus();
-                if (status.Playing)
-                {
-                    await spotify.Pause();
-                    btn.Content = "|>";
-                }
-                else
-                {
-                    await spotify.Play();
-                    btn.Content = "||";
-                }
+                await spotify.Pause();
+            }
+            else
+            {
+                await spotify.Play();
             }
         }
 
         private void OnNextClick(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn)
-            {
-                spotify.Skip();
-            }
+            spotify.Skip();
         }
 
         private void OnWindowMouseDown(object sender, MouseButtonEventArgs e)

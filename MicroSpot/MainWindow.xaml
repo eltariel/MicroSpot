@@ -6,9 +6,8 @@
         xmlns:local="clr-namespace:MicroSpot"
         mc:Ignorable="d"
         Title="MicroSpot"
-        Height="80" Width="300" MinHeight="80" MinWidth="300" MaxHeight="80"
-        WindowStyle="None"
-        Topmost="True"
+        Height="82" Width="300" MinHeight="82" MinWidth="300" MaxHeight="82"
+        WindowStyle="None" Topmost="True" ShowInTaskbar="False"
         MouseLeftButtonDown="OnWindowMouseDown">
     <WindowChrome.WindowChrome>
         <WindowChrome 
@@ -17,6 +16,10 @@
     </WindowChrome.WindowChrome>
 
     <DockPanel Background="Black" LastChildFill="True">
+        <ProgressBar DockPanel.Dock="Bottom"
+                     Foreground="Aqua"
+                     BorderBrush="Black"
+                     x:Name="TrackProgress"/>
         <Image x:Name="TrackImage"
                DockPanel.Dock="Left"  Height="80" Width="80"
                Stretch="UniformToFill"/>
@@ -26,6 +29,7 @@
                     BorderThickness="0"
                     Foreground="White">|&lt;</Button>
             <Button Click="OnPlayPauseClick"
+                    x:Name="PlayButton"
                     Background="Black"
                     BorderThickness="0"
                     Foreground="White">||</Button>
@@ -41,9 +45,16 @@
             <TextBlock x:Name="TrackArtist"
                        Text="Artist"
                        Foreground="Gray" />
+            <TextBlock x:Name="TrackTime"
+                       Text="0:00/0:00"
+                       Foreground="Gray" />
         </StackPanel>
     </DockPanel>
 </Window>
+
+
+
+
 
 
 
