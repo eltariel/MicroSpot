@@ -28,6 +28,7 @@ namespace MicroSpot
             }
 
             var status = spotify.GetStatus();
+            UpdatePlayState(status.Playing);
             UpdateDisplay(status.Track);
 
             spotify.OnTrackChange += OnTrackChange;
@@ -36,15 +37,37 @@ namespace MicroSpot
             spotify.ListenForEvents = true;
         }
 
-        private void OnPlayStateChange(object sender, PlayStateEventArgs e)
+        private void UpdatePlayState(bool playing)
         {
             if (!Dispatcher.CheckAccess())
             {
-                Dispatcher.BeginInvoke(new Action(() => OnPlayStateChange(sender, e)));
+                Dispatcher.BeginInvoke(new Action(() => UpdatePlayState(playing)));
                 return;
             }
 
-            PlayButton.Content = spotify.GetStatus().Playing ? "||" : "|>";
+            PlayImage.Visibility = playing ? Visibility.Hidden : Visibility.Visible;
+            PauseImage.Visibility = playing ? Visibility.Visible : Visibility.Hidden;
+        }
+
+        private async void UpdateDisplay(Track track)
+        {
+            if (!Dispatcher.CheckAccess())
+            {
+                await Dispatcher.BeginInvoke(new Action(() => UpdateDisplay(track)));
+                return;
+            }
+
+            currentTrack = track;
+            TrackTitle.Text = track?.TrackResource.Name ?? "No track";
+            TrackArtist.Text = track?.ArtistResource.Name ?? string.Empty;
+            TrackImage.Source = track?.AlbumResource != null ? (await track.GetAlbumArtAsync(AlbumArtSize.Size160)).ToBitmapSource() : null;
+            TrackProgress.Maximum = track?.Length ?? 0;
+        }
+
+        private void OnPlayStateChange(object sender, PlayStateEventArgs e)
+        {
+            var playing = spotify.GetStatus().Playing;
+            UpdatePlayState(playing);
         }
 
         private void OnTrackChange(object sender, TrackChangeEventArgs e)
@@ -65,21 +88,6 @@ namespace MicroSpot
             {
                 TrackProgress.Value = (int) e.TrackTime;
             }
-        }
-
-        private async void UpdateDisplay(Track track)
-        {
-            if (!Dispatcher.CheckAccess())
-            {
-                await Dispatcher.BeginInvoke(new Action(() => UpdateDisplay(track)));
-                return;
-            }
-
-            currentTrack = track;
-            TrackTitle.Text = track?.TrackResource.Name ?? "No track";
-            TrackArtist.Text = track?.ArtistResource.Name ?? string.Empty;
-            TrackImage.Source = track?.AlbumResource != null ? (await track.GetAlbumArtAsync(AlbumArtSize.Size160)).ToBitmapSource() : null;
-            TrackProgress.Maximum = track?.Length ?? 0;
         }
 
         private void OnBackClick(object sender, RoutedEventArgs e)
@@ -107,6 +115,11 @@ namespace MicroSpot
         private void OnWindowMouseDown(object sender, MouseButtonEventArgs e)
         {
             DragMove();
+        }
+
+        private void OnSettingsClick(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("TODO: Config box goes here");
         }
     }
 }

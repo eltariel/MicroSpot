@@ -102,5 +102,19 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\Dark\transport.ff.png" />
+    <Resource Include="Assets\Dark\transport.pause.png" />
+    <Resource Include="Assets\Dark\transport.play.png" />
+    <Resource Include="Assets\Dark\transport.rew.png" />
+    <Resource Include="Assets\Light\transport.ff.png" />
+    <Resource Include="Assets\Light\transport.pause.png" />
+    <Resource Include="Assets\Light\transport.play.png" />
+    <Resource Include="Assets\Light\transport.rew.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\Dark\feature.settings.png" />
+    <Resource Include="Assets\Light\feature.settings.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

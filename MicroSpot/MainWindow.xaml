@@ -23,20 +23,35 @@
         <Image x:Name="TrackImage"
                DockPanel.Dock="Left"  Height="80" Width="80"
                Stretch="UniformToFill"/>
-        <UniformGrid DockPanel.Dock="Right" Rows="3">
+        <UniformGrid DockPanel.Dock="Right" Rows="4">
             <Button Click="OnBackClick"
                     Background="Black"
                     BorderThickness="0"
-                    Foreground="White">|&lt;</Button>
+                    Foreground="White">
+                <Image Source="Assets/Dark/transport.rew.png"/>
+            </Button>
             <Button Click="OnPlayPauseClick"
                     x:Name="PlayButton"
                     Background="Black"
                     BorderThickness="0"
-                    Foreground="White">||</Button>
+                    Foreground="White">
+                <Grid>
+                    <Image x:Name="PauseImage" Source="Assets/Dark/transport.pause.png" />
+                    <Image x:Name="PlayImage" Source="Assets/Dark/transport.play.png" />
+                </Grid>
+            </Button>
             <Button Click="OnNextClick"
                     Background="Black"
                     BorderThickness="0"
-                    Foreground="White">&gt;|</Button>
+                    Foreground="White">
+                <Image Source="Assets/Dark/transport.ff.png"/>
+            </Button>
+            <Button Click="OnSettingsClick"
+                    Background="Black"
+                    BorderThickness="0"
+                    Foreground="White">
+                <Image Source="Assets/Dark/feature.settings.png"/>
+            </Button>
         </UniformGrid>
         <StackPanel>
             <TextBlock x:Name="TrackTitle"
