@@ -8,31 +8,34 @@
         Title="MicroSpot"
         Height="82" Width="300" MinHeight="82" MinWidth="300" MaxHeight="82"
         WindowStyle="None" Topmost="True" ShowInTaskbar="False"
-        MouseLeftButtonDown="OnWindowMouseDown">
+        MouseLeftButtonDown="OnWindowMouseDown"
+        Background="Black"
+        Loaded="OnLoaded"
+        Closing="OnClosing">
     <WindowChrome.WindowChrome>
         <WindowChrome 
             CaptionHeight="0"
             ResizeBorderThickness="5" />
     </WindowChrome.WindowChrome>
 
-    <DockPanel Background="Black" LastChildFill="True">
+    <DockPanel LastChildFill="True">
         <ProgressBar DockPanel.Dock="Bottom"
                      Foreground="Aqua"
-                     BorderBrush="Black"
+                     BorderBrush="Transparent"
                      x:Name="TrackProgress"/>
         <Image x:Name="TrackImage"
                DockPanel.Dock="Left"  Height="80" Width="80"
                Stretch="UniformToFill"/>
         <UniformGrid DockPanel.Dock="Right" Rows="4">
             <Button Click="OnBackClick"
-                    Background="Black"
+                    Background="Transparent"
                     BorderThickness="0"
                     Foreground="White">
-                <Image Source="Assets/Dark/transport.rew.png"/>
+                <Image x:Name="RewindImage" Source="Assets/Dark/transport.rew.png"/>
             </Button>
             <Button Click="OnPlayPauseClick"
                     x:Name="PlayButton"
-                    Background="Black"
+                    Background="Transparent"
                     BorderThickness="0"
                     Foreground="White">
                 <Grid>
@@ -41,16 +44,16 @@
                 </Grid>
             </Button>
             <Button Click="OnNextClick"
-                    Background="Black"
+                    Background="Transparent"
                     BorderThickness="0"
                     Foreground="White">
-                <Image Source="Assets/Dark/transport.ff.png"/>
+                <Image x:Name="ForwardImage" Source="Assets/Dark/transport.ff.png"/>
             </Button>
             <Button Click="OnSettingsClick"
-                    Background="Black"
+                    Background="Transparent"
                     BorderThickness="0"
                     Foreground="White">
-                <Image Source="Assets/Dark/feature.settings.png"/>
+                <Image x:Name="SettingsImage" Source="Assets/Dark/feature.settings.png"/>
             </Button>
         </UniformGrid>
         <StackPanel>
