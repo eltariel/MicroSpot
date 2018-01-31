@@ -1,28 +1,7 @@
 using System.Windows.Media;
-using SpotifyAPI.Web.Models;
 
-namespace MicroSpot
+namespace MicroSpot.Settings
 {
-    public class Settings
-    {
-        public Settings()
-        {
-            Ui = new UiSettings();
-            Comms = new CommsSettings();
-        }
-
-        public UiSettings Ui { get; set; }
-        public CommsSettings Comms { get; set; }
-    }
-
-    public class CommsSettings
-    {
-        public bool UseWebApi { get; set; }
-        public string ClientId { get; set; }
-        public string ClientSecret { get; set; }
-        public Token AuthToken { get; set; }
-    }
-
     public class UiSettings
     {
         public double Top { get; set; }

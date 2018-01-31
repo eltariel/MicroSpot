@@ -12,7 +12,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using SpotifyAPI.Web;
+using AutoMapper;
+using MicroSpot.Settings;
 using SpotifyAPI.Web.Auth;
 using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
@@ -26,19 +27,16 @@ namespace MicroSpot
     {
         private AutorizationCodeAuth auth;
 
-        public SettingsWindow(Settings settings)
+        public SettingsWindow(Settings.Settings settings)
         {
-            Settings = settings;
-
-            // TODO: Copy settings into datacontext rather than just reference, so that we can do ok/cancel nicely
-            DataContext = settings;
-
             InitializeComponent();
+
+            // Clone the settings instead of just reference
+            Settings = settings.Clone();
+            DataContext = Settings;
         }
 
-
-        public Settings Settings { get; }
-        public SpotifyWebAPI SpotifyWeb { get; private set; }
+        public Settings.Settings Settings { get; }
 
         private void OnLoginClick(object sender, RoutedEventArgs e)
         {
@@ -62,11 +60,6 @@ namespace MicroSpot
             {
                 Settings.Comms.AuthToken = token;
 
-                SpotifyWeb = new SpotifyWebAPI
-                {
-                    TokenType = token.TokenType,
-                    AccessToken = token.AccessToken
-                };
             }
             else
             {
@@ -75,6 +68,19 @@ namespace MicroSpot
 
             //Stop the HTTP Server, done.
             auth.StopHttpServer();
+        }
+
+        private void OnOkClick(object sender, RoutedEventArgs e)
+        {
+            DialogResult = true;
+            Configuration.Write(Settings);
+            Close();
+        }
+
+        private void OnCancelClick(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
         }
     }
 }

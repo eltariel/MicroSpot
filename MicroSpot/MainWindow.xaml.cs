@@ -3,9 +3,8 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using SpotifyAPI.Local;
+using MicroSpot.Api;
 using SpotifyAPI.Local.Enums;
-using SpotifyAPI.Local.Models;
 
 namespace MicroSpot
 {
@@ -14,9 +13,9 @@ namespace MicroSpot
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Settings settings;
-        private Track currentTrack;
-        private SpotifyApiProxy api;
+        private Settings.Settings settings;
+        private TrackDetails currentTrack;
+        private ISpotifyApi api;
 
         public MainWindow()
         {
@@ -29,7 +28,7 @@ namespace MicroSpot
         {
             try
             {
-                settings = Configuration.Load<Settings>();
+                settings = Configuration.Load<Settings.Settings>();
             }
             catch (Exception ex)
             {
@@ -37,10 +36,10 @@ namespace MicroSpot
                 MessageBox.Show($"Can't parse config, generating new one instead.\n\n--- EXCEPTION ---\n{ex}");
             }
 
-            if (settings == default(Settings))
+            if (settings == default(Settings.Settings))
             {
-                settings = new Settings();
-                WriteSettings();
+                settings = new Settings.Settings();
+                WritePositionSettings();
             }
 
             UpdateDisplaySettings();
@@ -48,11 +47,11 @@ namespace MicroSpot
 
         private void Connect()
         {
-            api = new SpotifyApiProxy(settings.Comms);
+            api = SpotifyApiFactory.GetSpotifyApi(settings.Comms);
             api.Connect();
 
             var status = api.GetStatus();
-            UpdatePlayState(status.Playing);
+            UpdatePlayState(status.IsPlaying);
             UpdateDisplay(status.Track);
 
             api.OnTrackChange += OnTrackChange;
@@ -93,7 +92,7 @@ namespace MicroSpot
             PauseImage.Visibility = playing ? Visibility.Visible : Visibility.Hidden;
         }
 
-        private async void UpdateDisplay(Track track)
+        private async void UpdateDisplay(TrackDetails track)
         {
             if (!Dispatcher.CheckAccess())
             {
@@ -102,16 +101,15 @@ namespace MicroSpot
             }
 
             currentTrack = track;
-            TrackTitle.Text = track?.TrackResource.Name ?? "No track";
-            TrackArtist.Text = track?.ArtistResource.Name ?? string.Empty;
-            TrackImage.Source = track?.AlbumResource != null ? (await track.GetAlbumArtAsync(AlbumArtSize.Size160)).ToBitmapSource() : null;
-            TrackProgress.Maximum = track?.Length ?? 0;
+            TrackTitle.Text = track?.Name ?? "No track";
+            TrackArtist.Text = track?.Artist ?? string.Empty;
+            TrackImage.Source = (await api.GetAlbumArtAsync(AlbumArtSize.Size160)).ToBitmapSource();
+            TrackProgress.Maximum = track?.Length.TotalMilliseconds ?? 0;
         }
 
         private void OnPlayStateChange(object sender, PlayStateEventArgs e)
         {
-            var playing = api.GetStatus().Playing;
-            UpdatePlayState(playing);
+            UpdatePlayState(e.IsPlaying);
         }
 
         private void OnTrackChange(object sender, TrackChangeEventArgs e)
@@ -127,10 +125,10 @@ namespace MicroSpot
                 return;
             }
 
-            TrackTime.Text = $@"{TimeSpan.FromSeconds(e.TrackTime):m\:ss}/{TimeSpan.FromSeconds(currentTrack.Length):m\:ss}";
-            if (e.TrackTime < (currentTrack?.Length ?? 0))
+            TrackTime.Text = $@"{e.Time:m\:ss}/{currentTrack.Length:m\:ss}";
+            if (e.Time < (currentTrack?.Length ?? TimeSpan.Zero))
             {
-                TrackProgress.Value = (int) e.TrackTime;
+                TrackProgress.Value = (int) e.Time.TotalMilliseconds;
             }
         }
 
@@ -141,7 +139,7 @@ namespace MicroSpot
 
         private async void OnPlayPauseClick(object sender, RoutedEventArgs e)
         {
-            if (api.GetStatus().Playing)
+            if (api.GetStatus().IsPlaying)
             {
                 await api.Pause();
             }
@@ -164,12 +162,16 @@ namespace MicroSpot
         private void OnSettingsClick(object sender, RoutedEventArgs e)
         {
             var sw = new SettingsWindow(settings);
-            sw.Show();
+            if (sw.ShowDialog() ?? true)
+            {
+                settings = sw.Settings;
+                Connect();
+            }
         }
 
         private void OnClosing(object sender, CancelEventArgs e)
         {
-            WriteSettings();
+            WritePositionSettings();
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -177,20 +179,12 @@ namespace MicroSpot
             Connect();
         }
 
-        private void WriteSettings()
+        private void WritePositionSettings()
         {
             settings.Ui.Top = Top;
             settings.Ui.Left = Left;
             settings.Ui.Height = Height;
             settings.Ui.Width = Width;
-
-            settings.Ui.ProgressBrush = TrackProgress.Foreground;
-            settings.Ui.TrackTitleBrush = TrackTitle.Foreground;
-            settings.Ui.TrackArtistBrush = TrackArtist.Foreground;
-            settings.Ui.TimeBrush = TrackTime.Foreground;
-            settings.Ui.BackgroundBrush = Background;
-
-            settings.Ui.DarkIcons = false;
 
             Configuration.Write(settings);
         }

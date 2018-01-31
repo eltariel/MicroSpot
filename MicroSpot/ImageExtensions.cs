@@ -21,6 +21,11 @@ namespace MicroSpot
         /// <returns>A BitmapSource</returns> 
         public static BitmapSource ToBitmapSource(this Bitmap source)
         {
+            if (source == null)
+            {
+                return null;
+            }
+
             var hBitmap = source.GetHbitmap();
             try
             {
