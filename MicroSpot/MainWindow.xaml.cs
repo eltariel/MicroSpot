@@ -72,6 +72,13 @@ namespace MicroSpot
 
         private void Connect()
         {
+            if (api != null)
+            {
+                api.OnTrackChange -= OnTrackChange;
+                api.OnPlayStateChange -= OnPlayStateChange;
+                api.OnTrackTimeChange -= OnTrackTimeChange;
+            }
+
             api = SpotifyApiFactory.GetSpotifyApi(config);
             api.Connect();
 
