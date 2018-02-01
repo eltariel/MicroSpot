@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:MicroSpot"
         xmlns:settings="clr-namespace:MicroSpot.Settings"
         mc:Ignorable="d"
-        Title="MicroSpot Settings" Height="300" Width="300" d:DataContext="{d:DesignInstance settings:Settings}">
+        Title="MicroSpot Settings" Height="300" Width="300" d:DataContext="{d:DesignInstance settings:Configuration}">
     <DockPanel LastChildFill="True">
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Click="OnOkClick" IsDefault="True">OK</Button>

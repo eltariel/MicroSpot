@@ -4,10 +4,10 @@ namespace MicroSpot.Api
 {
     public class SpotifyApiFactory
     {
-        public static ISpotifyApi GetSpotifyApi(CommsSettings settings)
+        public static ISpotifyApi GetSpotifyApi(Configuration config)
         {
-            return settings.UseWebApi
-                ? (ISpotifyApi)new SpotifyWebApi(settings)
+            return config.Comms.UseWebApi
+                ? (ISpotifyApi)new SpotifyWebApi(config)
                 : (ISpotifyApi)new SpotifyLocalApi();
         }
     }

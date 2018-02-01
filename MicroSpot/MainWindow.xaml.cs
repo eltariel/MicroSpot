@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using MicroSpot.Api;
+using MicroSpot.Settings;
 using SpotifyAPI.Local.Enums;
 
 namespace MicroSpot
@@ -13,7 +14,7 @@ namespace MicroSpot
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Settings.Settings settings;
+        private Settings.Configuration config;
         private TrackDetails currentTrack;
         private ISpotifyApi api;
 
@@ -28,26 +29,49 @@ namespace MicroSpot
         {
             try
             {
-                settings = Configuration.Load<Settings.Settings>();
+                config = Configuration.Load();
             }
             catch (Exception ex)
             {
-                settings = default;
+                config = default;
                 MessageBox.Show($"Can't parse config, generating new one instead.\n\n--- EXCEPTION ---\n{ex}");
             }
 
-            if (settings == default(Settings.Settings))
+            if (!config.Valid)
             {
-                settings = new Settings.Settings();
-                WritePositionSettings();
+                WriteDefaultConfig();
             }
 
             UpdateDisplaySettings();
         }
 
+        private void WriteDefaultConfig()
+        {
+            config.Ui = new UiSettings
+            {
+                Top = Top,
+                Left = Left,
+                Height = Height,
+                Width = Width,
+                ProgressBrush = TrackProgress.Foreground,
+                TrackTitleBrush = TrackTitle.Foreground,
+                TrackArtistBrush = TrackArtist.Foreground,
+                TimeBrush = TrackTime.Foreground,
+                BackgroundBrush = Background,
+                DarkIcons = false
+            };
+
+            config.Comms = new CommsSettings
+            {
+                UseWebApi = false,
+            };
+
+            config.WriteAll();
+        }
+
         private void Connect()
         {
-            api = SpotifyApiFactory.GetSpotifyApi(settings.Comms);
+            api = SpotifyApiFactory.GetSpotifyApi(config);
             api.Connect();
 
             var status = api.GetStatus();
@@ -61,18 +85,18 @@ namespace MicroSpot
 
         private void UpdateDisplaySettings()
         {
-            Top = settings.Ui.Top;
-            Left = settings.Ui.Left;
-            Height = settings.Ui.Height;
-            Width = settings.Ui.Width;
+            Top = config.Ui.Top;
+            Left = config.Ui.Left;
+            Height = config.Ui.Height;
+            Width = config.Ui.Width;
 
-            TrackProgress.Foreground = settings.Ui.ProgressBrush;
-            TrackTitle.Foreground = settings.Ui.TrackTitleBrush;
-            TrackArtist.Foreground = settings.Ui.TrackArtistBrush;
-            TrackTime.Foreground = settings.Ui.TimeBrush;
-            Background = settings.Ui.BackgroundBrush;
+            TrackProgress.Foreground = config.Ui.ProgressBrush;
+            TrackTitle.Foreground = config.Ui.TrackTitleBrush;
+            TrackArtist.Foreground = config.Ui.TrackArtistBrush;
+            TrackTime.Foreground = config.Ui.TimeBrush;
+            Background = config.Ui.BackgroundBrush;
 
-            var assetPath = $"/Assets/{(settings.Ui.DarkIcons?"Light":"Dark")}";
+            var assetPath = $"/Assets/{(config.Ui.DarkIcons?"Light":"Dark")}";
             RewindImage.Source = new BitmapImage(new Uri($"{assetPath}/transport.rew.png", UriKind.Relative));
             PlayImage.Source = new BitmapImage(new Uri($"{assetPath}/transport.play.png", UriKind.Relative));
             PauseImage.Source = new BitmapImage(new Uri($"{assetPath}/transport.pause.png", UriKind.Relative));
@@ -161,12 +185,15 @@ namespace MicroSpot
 
         private void OnSettingsClick(object sender, RoutedEventArgs e)
         {
-            var sw = new SettingsWindow(settings);
+            Topmost = false;
+            var sw = new SettingsWindow(config);
             if (sw.ShowDialog() ?? true)
             {
-                settings = sw.Settings;
+                config = sw.Configuration;
                 Connect();
             }
+
+            Topmost = true;
         }
 
         private void OnClosing(object sender, CancelEventArgs e)
@@ -181,12 +208,12 @@ namespace MicroSpot
 
         private void WritePositionSettings()
         {
-            settings.Ui.Top = Top;
-            settings.Ui.Left = Left;
-            settings.Ui.Height = Height;
-            settings.Ui.Width = Width;
+            config.Ui.Top = Top;
+            config.Ui.Left = Left;
+            config.Ui.Height = Height;
+            config.Ui.Width = Width;
 
-            Configuration.Write(settings);
+            config.WriteUi();
         }
     }
 }

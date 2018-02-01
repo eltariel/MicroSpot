@@ -9,23 +9,28 @@ using SpotifyAPI.Local.Enums;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Auth;
 using SpotifyAPI.Web.Enums;
+using SpotifyAPI.Web.Models;
 
 namespace MicroSpot.Api
 {
     public class SpotifyWebApi : ISpotifyApi
     {
-        private readonly CommsSettings commsSettings;
+        private readonly Configuration config;
         private readonly AutorizationCodeAuth auth;
         private SpotifyWebAPI webApi;
         private Timer tokenRefreshTimer;
+        private Timer eventPollTimer;
+        private PlayerStatus lastStatus;
+        private PlaybackContext lastPlayback;
+        private (string imgUrl, Bitmap bitmap) currentImg;
 
-        public SpotifyWebApi(CommsSettings commsSettings)
+        public SpotifyWebApi(Configuration config)
         {
-            this.commsSettings = commsSettings;
+            this.config = config;
 
             auth = new AutorizationCodeAuth
             {
-                ClientId = commsSettings.ClientId,
+                ClientId = config.Comms.ClientId,
                 RedirectUri = "http://localhost:8888",
                 Scope = (Scope)0x1FFFF,
             };
@@ -39,9 +44,10 @@ namespace MicroSpot.Api
         public void Connect()
         {
             webApi = new SpotifyWebAPI();
-            tokenRefreshTimer = new Timer(TokenRefreshTimerCallback);
+            tokenRefreshTimer = new Timer(OnTokenRefreshTick);
+            eventPollTimer = new Timer(OnEventPollTick);
 
-            if (commsSettings.AuthToken == null)
+            if (config.Comms.AuthToken == null)
             {
                 auth.StartHttpServer(8888);
                 auth.DoAuth();
@@ -51,13 +57,38 @@ namespace MicroSpot.Api
                 RefreshToken();
             }
 
-            // Start event poll timer
+            eventPollTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        }
+
+        private void OnEventPollTick(object state)
+        {
+            var s = GetStatus();
+
+            if (s.IsPlaying != lastStatus?.IsPlaying)
+            {
+                OnPlayStateChange?.Invoke(this, new PlayStateEventArgs(s.IsPlaying));
+            }
+
+            if (s.Track != lastStatus?.Track)
+            {
+                OnTrackChange?.Invoke(this, new TrackChangeEventArgs(s.Track, lastStatus?.Track));
+            }
+
+            if (s.PlayPosition != lastStatus?.PlayPosition)
+            {
+                OnTrackTimeChange?.Invoke(this, new TrackTimeChangeEventArgs(s.PlayPosition));
+            }
+
+            lastStatus = s;
         }
 
         public PlayerStatus GetStatus()
         {
-            var playbackContext = webApi.GetPlayback();
-            return new PlayerStatus(playbackContext.IsPlaying, new TrackDetails(playbackContext.Item));
+            lastPlayback = webApi.GetPlayback();
+
+            return lastPlayback.HasError()
+                ? new PlayerStatus(false, new TrackDetails(default(FullTrack)), TimeSpan.Zero)
+                : new PlayerStatus(lastPlayback.IsPlaying, new TrackDetails(lastPlayback.Item), TimeSpan.FromMilliseconds(lastPlayback.ProgressMs));
         }
 
         public void Previous()
@@ -85,28 +116,40 @@ namespace MicroSpot.Api
         public async Task<Bitmap> GetAlbumArtAsync(AlbumArtSize size)
         {
             // TODO: Select best img size
-            // TODO: Cache this
-            var imgUrl = webApi.GetPlayback().Item.Album.Images[0].Url;
-            Bitmap b;
-            using (var wc = new WebClient())
-            using (var s = await wc.OpenReadTaskAsync(imgUrl))
+            var imgUrl = lastPlayback?.Item.Album.Images[0].Url;
+            Bitmap bitmap;
+
+            if (currentImg.imgUrl == imgUrl && currentImg.bitmap != null)
             {
-                b = new Bitmap(s);
+                return currentImg.bitmap;
             }
 
-            return b;
+            if (imgUrl == null)
+            {
+                bitmap = new Bitmap(1,1);
+            }
+            else
+            {
+                using (var wc = new WebClient())
+                using (var s = await wc.OpenReadTaskAsync(imgUrl))
+                {
+                    bitmap = new Bitmap(s);
+                }
+            }
+
+            currentImg = (imgUrl, bitmap);
+
+            return bitmap;
         }
 
         private void OnAuthResponseReceived(AutorizationCodeAuthResponse response)
         {
-            var token = auth.ExchangeAuthCode(response.Code, commsSettings.ClientSecret);
+            var token = auth.ExchangeAuthCode(response.Code, config.Comms.ClientSecret);
 
             if (string.IsNullOrWhiteSpace(token.Error))
             {
-                commsSettings.AuthToken = token;
-
-                webApi.TokenType = commsSettings.AuthToken.TokenType;
-                webApi.AccessToken = commsSettings.AuthToken.AccessToken;
+                config.Comms.AuthToken = token;
+                RefreshToken();
             }
             else
             {
@@ -116,18 +159,41 @@ namespace MicroSpot.Api
             auth.StopHttpServer();
         }
 
-        private void TokenRefreshTimerCallback(object state)
+        private void OnTokenRefreshTick(object state)
         {
             RefreshToken();
         }
 
         private void RefreshToken()
         {
-            commsSettings.AuthToken = auth.RefreshToken(commsSettings.AuthToken.RefreshToken, commsSettings.ClientSecret);
-            webApi.TokenType = commsSettings.AuthToken.TokenType;
-            webApi.AccessToken = commsSettings.AuthToken.AccessToken;
+            lock (auth)
+            {
+                var token = auth.RefreshToken(config.Comms.AuthToken.RefreshToken, config.Comms.ClientSecret);
+
+                if (string.IsNullOrWhiteSpace(token.Error))
+                {
+                    if (string.IsNullOrWhiteSpace(token.RefreshToken))
+                    {
+                        // Refresh token may not always be replaced.
+                        token.RefreshToken = config.Comms.AuthToken.RefreshToken;
+                    }
+
+                    config.Comms.AuthToken = token;
+                    config.WriteComms();
+
+                    webApi.TokenType = config.Comms.AuthToken.TokenType;
+                    webApi.AccessToken = config.Comms.AuthToken.AccessToken;
+                }
+                else
+                {
+                    MessageBox.Show($"Error refreshing token: {token.Error}\n\n{token.ErrorDescription}", "Auth Error");
+                }
+            }
+            
             // ReSharper disable once PossibleLossOfFraction
-            tokenRefreshTimer.Change(TimeSpan.FromSeconds(commsSettings.AuthToken.ExpiresIn / 2), Timeout.InfiniteTimeSpan);
+            tokenRefreshTimer.Change(
+                TimeSpan.FromSeconds(config.Comms.AuthToken.ExpiresIn / 2),
+                Timeout.InfiniteTimeSpan);
         }
     }
 }

@@ -1,22 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using AutoMapper;
+﻿using System.Windows;
 using MicroSpot.Settings;
 using SpotifyAPI.Web.Auth;
 using SpotifyAPI.Web.Enums;
-using SpotifyAPI.Web.Models;
 
 namespace MicroSpot
 {
@@ -27,23 +12,23 @@ namespace MicroSpot
     {
         private AutorizationCodeAuth auth;
 
-        public SettingsWindow(Settings.Settings settings)
+        public SettingsWindow(Configuration config)
         {
             InitializeComponent();
 
-            // Clone the settings instead of just reference
-            Settings = settings.Clone();
-            DataContext = Settings;
+            // Clone the configuration instead of just reference
+            Configuration = config.Clone();
+            DataContext = Configuration;
         }
 
-        public Settings.Settings Settings { get; }
+        public Configuration Configuration { get; }
 
         private void OnLoginClick(object sender, RoutedEventArgs e)
         {
             //Create the auth object
             auth = new AutorizationCodeAuth
             {
-                ClientId = Settings.Comms.ClientId,
+                ClientId = Configuration.Comms.ClientId,
                 RedirectUri = "http://localhost:8888",
                 Scope = (Scope)0x1FFFF,
             };
@@ -54,26 +39,24 @@ namespace MicroSpot
 
         private void OnAuthResponseReceived(AutorizationCodeAuthResponse response)
         {
-            var token = auth.ExchangeAuthCode(response.Code, Settings.Comms.ClientSecret);
+            var token = auth.ExchangeAuthCode(response.Code, Configuration.Comms.ClientSecret);
 
             if (string.IsNullOrWhiteSpace(token.Error))
             {
-                Settings.Comms.AuthToken = token;
-
+                Configuration.Comms.AuthToken = token;
             }
             else
             {
                 MessageBox.Show($"Error authenticating: {token.Error}\n\n{token.ErrorDescription}", "Auth Error");
             }
 
-            //Stop the HTTP Server, done.
             auth.StopHttpServer();
         }
 
         private void OnOkClick(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
-            Configuration.Write(Settings);
+            Configuration.WriteAll();
             Close();
         }
 

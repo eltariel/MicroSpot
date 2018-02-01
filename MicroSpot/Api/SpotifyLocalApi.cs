@@ -33,7 +33,7 @@ namespace MicroSpot.Api
         public PlayerStatus GetStatus()
         {
             var status = localApi.GetStatus();
-            return new PlayerStatus(status.Playing, new TrackDetails(status.Track));
+            return new PlayerStatus(status.Playing, new TrackDetails(status.Track), TimeSpan.FromSeconds(status.PlayingPosition));
         }
 
         private void OnLocalPlayStateChange(object sender, SpotifyAPI.Local.PlayStateEventArgs e)
@@ -52,7 +52,7 @@ namespace MicroSpot.Api
 
         private void OnLocalTrackTimeChange(object sender, SpotifyAPI.Local.TrackTimeChangeEventArgs e)
         {
-            OnTrackTimeChange?.Invoke(sender, new TrackTimeChangeEventArgs(TimeSpan.FromMilliseconds(e.TrackTime)));
+            OnTrackTimeChange?.Invoke(sender, new TrackTimeChangeEventArgs(TimeSpan.FromSeconds(e.TrackTime)));
         }
 
         public void Previous()
