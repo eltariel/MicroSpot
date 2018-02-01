@@ -5,32 +5,68 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MicroSpot"
         xmlns:settings="clr-namespace:MicroSpot.Settings"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="MicroSpot Settings" Height="300" Width="300" d:DataContext="{d:DesignInstance settings:Configuration}">
+        Title="MicroSpot Settings" Height="350" Width="500" d:DataContext="{d:DesignInstance settings:Configuration}">
     <DockPanel LastChildFill="True">
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Click="OnOkClick" IsDefault="True">OK</Button>
             <Button Click="OnCancelClick" IsCancel="True">Cancel</Button>
         </StackPanel>
-        <Grid DataContext="{Binding Comms}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Row="0" Grid.Column="0">Use WebAPI</TextBlock>
-            <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding UseWebApi}" />
-            <TextBlock Grid.Row="1" Grid.Column="0">Client ID</TextBlock>
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ClientId}" />
-            <TextBlock Grid.Row="2" Grid.Column="0">Client Secret</TextBlock>
-            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ClientSecret}" />
-            <Button Grid.Row="3" Grid.Column="1" Click="OnLoginClick">Login</Button>
-        </Grid>
+        <TabControl>
+            <TabItem Header="Comms">
+                <Grid DataContext="{Binding Comms}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0">Use WebAPI</TextBlock>
+                    <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding UseWebApi}" />
+                    <TextBlock Grid.Row="1" Grid.Column="0">Client ID</TextBlock>
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ClientId}" />
+                    <TextBlock Grid.Row="2" Grid.Column="0">Client Secret</TextBlock>
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ClientSecret}" />
+                    <Button Grid.Row="3" Grid.Column="1" Click="OnLoginClick">Login</Button>
+                </Grid>
+            </TabItem>
+            <TabItem Header="UI">
+                <Grid DataContext="{Binding Ui}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0">Background</TextBlock>
+                    <xctk:ColorPicker Grid.Row="0" Grid.Column="1" SelectedColor="{Binding BackgroundColor}"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0">Track Title</TextBlock>
+                    <xctk:ColorPicker Grid.Row="1" Grid.Column="1" SelectedColor="{Binding TrackTitleColor}" />
+                    <TextBlock Grid.Row="2" Grid.Column="0">Artist</TextBlock>
+                    <xctk:ColorPicker Grid.Row="2" Grid.Column="1" SelectedColor="{Binding TrackArtistColor}" />
+                    <TextBlock Grid.Row="3" Grid.Column="0">Time</TextBlock>
+                    <xctk:ColorPicker Grid.Row="3" Grid.Column="1" SelectedColor="{Binding TimeColor}" />
+                    <TextBlock Grid.Row="4" Grid.Column="0">Progress Bar</TextBlock>
+                    <xctk:ColorPicker Grid.Row="4" Grid.Column="1" SelectedColor="{Binding ProgressColor}" />
+                    <TextBlock Grid.Row="5" Grid.Column="0">Use Dark Icons</TextBlock>
+                    <CheckBox Grid.Row="5" Grid.Column="1" IsChecked="{Binding DarkIcons}" />
+                </Grid>
+            </TabItem>
+        </TabControl>
     </DockPanel>
 </Window>
+

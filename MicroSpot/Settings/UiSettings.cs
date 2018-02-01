@@ -9,11 +9,11 @@ namespace MicroSpot.Settings
         public double Height { get; set; }
         public double Width { get; set; }
 
-        public Brush ProgressBrush { get; set; }
-        public Brush TrackTitleBrush { get; set; }
-        public Brush TrackArtistBrush { get; set; }
-        public Brush TimeBrush { get; set; }
-        public Brush BackgroundBrush { get; set; }
+        public Color ProgressColor { get; set; }
+        public Color TrackTitleColor { get; set; }
+        public Color TrackArtistColor { get; set; }
+        public Color TimeColor { get; set; }
+        public Color BackgroundColor { get; set; }
         public bool DarkIcons { get; set; }
     }
 }

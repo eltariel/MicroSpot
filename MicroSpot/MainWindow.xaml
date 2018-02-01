@@ -12,6 +12,16 @@
         Background="Black"
         Loaded="OnLoaded"
         Closing="OnClosing">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSize}"/>
+            <Setter Property="Margin" Value="2,0"/>
+        </Style>
+    </Window.Resources>
     <WindowChrome.WindowChrome>
         <WindowChrome 
             CaptionHeight="0"

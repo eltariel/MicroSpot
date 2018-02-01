@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using MicroSpot.Api;
 using MicroSpot.Settings;
@@ -53,11 +54,11 @@ namespace MicroSpot
                 Left = Left,
                 Height = Height,
                 Width = Width,
-                ProgressBrush = TrackProgress.Foreground,
-                TrackTitleBrush = TrackTitle.Foreground,
-                TrackArtistBrush = TrackArtist.Foreground,
-                TimeBrush = TrackTime.Foreground,
-                BackgroundBrush = Background,
+                ProgressColor = (TrackProgress.Foreground as SolidColorBrush)?.Color ?? Colors.White,
+                TrackTitleColor = (TrackTitle.Foreground as SolidColorBrush)?.Color ?? Colors.White,
+                TrackArtistColor = (TrackArtist.Foreground as SolidColorBrush)?.Color ?? Colors.Gray,
+                TimeColor = (TrackTime.Foreground as SolidColorBrush)?.Color ?? Colors.Gray,
+                BackgroundColor = (Background as SolidColorBrush)?.Color ?? Colors.Black,
                 DarkIcons = false
             };
 
@@ -93,11 +94,11 @@ namespace MicroSpot
             Height = config.Ui.Height;
             Width = config.Ui.Width;
 
-            TrackProgress.Foreground = config.Ui.ProgressBrush;
-            TrackTitle.Foreground = config.Ui.TrackTitleBrush;
-            TrackArtist.Foreground = config.Ui.TrackArtistBrush;
-            TrackTime.Foreground = config.Ui.TimeBrush;
-            Background = config.Ui.BackgroundBrush;
+            TrackProgress.Foreground = new SolidColorBrush(config.Ui.ProgressColor);
+            TrackTitle.Foreground = new SolidColorBrush(config.Ui.TrackTitleColor);
+            TrackArtist.Foreground = new SolidColorBrush(config.Ui.TrackArtistColor);
+            TrackTime.Foreground = new SolidColorBrush(config.Ui.TimeColor);
+            Background = new SolidColorBrush(config.Ui.BackgroundColor);
 
             var assetPath = $"/Assets/{(config.Ui.DarkIcons?"Light":"Dark")}";
             RewindImage.Source = new BitmapImage(new Uri($"{assetPath}/transport.rew.png", UriKind.Relative));
@@ -194,6 +195,7 @@ namespace MicroSpot
             {
                 config = sw.Configuration;
                 Connect();
+                UpdateDisplaySettings();
             }
 
             Topmost = true;
