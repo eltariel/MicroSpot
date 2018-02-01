@@ -14,6 +14,8 @@ namespace MicroSpot.Api
         public event EventHandler<PlayStateEventArgs> OnPlayStateChange;
         public event EventHandler<TrackTimeChangeEventArgs> OnTrackTimeChange;
 
+        public bool IsConnected => true;
+
         public void Connect()
         {
             localApi = new SpotifyLocalAPI();

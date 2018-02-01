@@ -11,6 +11,8 @@ namespace MicroSpot.Api
         event EventHandler<TrackChangeEventArgs> OnTrackChange;
         event EventHandler<TrackTimeChangeEventArgs> OnTrackTimeChange;
 
+        bool IsConnected { get; }
+
         void Connect();
         Task<Bitmap> GetAlbumArtAsync(AlbumArtSize size);
         PlayerStatus GetStatus();

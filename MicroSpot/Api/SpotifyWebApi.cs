@@ -15,71 +15,32 @@ namespace MicroSpot.Api
 {
     public class SpotifyWebApi : ISpotifyApi
     {
-        private readonly Configuration config;
-        private readonly AutorizationCodeAuth auth;
+        private readonly AuthHelper auth;
+        private readonly Timer eventPollTimer;
+
         private SpotifyWebAPI webApi;
-        private Timer tokenRefreshTimer;
-        private Timer eventPollTimer;
-        private PlayerStatus lastStatus;
+
+        private PlayerStatus status;
         private PlaybackContext lastPlayback;
         private (string imgUrl, Bitmap bitmap) currentImg;
 
         public SpotifyWebApi(Configuration config)
         {
-            this.config = config;
-
-            auth = new AutorizationCodeAuth
-            {
-                ClientId = config.Comms.ClientId,
-                RedirectUri = "http://localhost:8888",
-                Scope = (Scope)0x1FFFF,
-            };
-            auth.OnResponseReceivedEvent += OnAuthResponseReceived;
+            auth = new AuthHelper(config);
+            eventPollTimer = new Timer(OnEventPollTick);
         }
 
         public event EventHandler<TrackChangeEventArgs> OnTrackChange;
         public event EventHandler<PlayStateEventArgs> OnPlayStateChange;
         public event EventHandler<TrackTimeChangeEventArgs> OnTrackTimeChange;
 
+        public bool IsConnected { get; private set; }
+
         public void Connect()
         {
+            auth.Authorise();
             webApi = new SpotifyWebAPI();
-            tokenRefreshTimer = new Timer(OnTokenRefreshTick);
-            eventPollTimer = new Timer(OnEventPollTick);
-
-            if (config.Comms.AuthToken == null)
-            {
-                auth.StartHttpServer(8888);
-                auth.DoAuth();
-            }
-            else
-            {
-                RefreshToken();
-            }
-
-            eventPollTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(1));
-        }
-
-        private void OnEventPollTick(object state)
-        {
-            var s = GetStatus();
-
-            if (s.IsPlaying != lastStatus?.IsPlaying)
-            {
-                OnPlayStateChange?.Invoke(this, new PlayStateEventArgs(s.IsPlaying));
-            }
-
-            if (s.Track != lastStatus?.Track)
-            {
-                OnTrackChange?.Invoke(this, new TrackChangeEventArgs(s.Track, lastStatus?.Track));
-            }
-
-            if (s.PlayPosition != lastStatus?.PlayPosition)
-            {
-                OnTrackTimeChange?.Invoke(this, new TrackTimeChangeEventArgs(s.PlayPosition));
-            }
-
-            lastStatus = s;
+            eventPollTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(0.5));
         }
 
         public PlayerStatus GetStatus()
@@ -116,7 +77,7 @@ namespace MicroSpot.Api
         public async Task<Bitmap> GetAlbumArtAsync(AlbumArtSize size)
         {
             // TODO: Select best img size
-            var imgUrl = lastPlayback?.Item.Album.Images[0].Url;
+            var imgUrl = lastPlayback?.Item?.Album.Images[0].Url;
             Bitmap bitmap;
 
             if (currentImg.imgUrl == imgUrl && currentImg.bitmap != null)
@@ -142,58 +103,28 @@ namespace MicroSpot.Api
             return bitmap;
         }
 
-        private void OnAuthResponseReceived(AutorizationCodeAuthResponse response)
+        private void OnEventPollTick(object state)
         {
-            var token = auth.ExchangeAuthCode(response.Code, config.Comms.ClientSecret);
+            if (!auth.SetAuth(webApi)) return;
+            IsConnected = true;
 
-            if (string.IsNullOrWhiteSpace(token.Error))
+            var ls = status;
+            status = GetStatus();
+
+            if (status.IsPlaying != ls?.IsPlaying)
             {
-                config.Comms.AuthToken = token;
-                RefreshToken();
+                OnPlayStateChange?.Invoke(this, new PlayStateEventArgs(status.IsPlaying));
             }
-            else
+
+            if (status.Track != ls?.Track)
             {
-                MessageBox.Show($"Error authenticating: {token.Error}\n\n{token.ErrorDescription}", "Auth Error");
+                OnTrackChange?.Invoke(this, new TrackChangeEventArgs(status.Track, ls?.Track));
             }
 
-            auth.StopHttpServer();
-        }
-
-        private void OnTokenRefreshTick(object state)
-        {
-            RefreshToken();
-        }
-
-        private void RefreshToken()
-        {
-            lock (auth)
+            if (status.PlayPosition != ls?.PlayPosition)
             {
-                var token = auth.RefreshToken(config.Comms.AuthToken.RefreshToken, config.Comms.ClientSecret);
-
-                if (string.IsNullOrWhiteSpace(token.Error))
-                {
-                    if (string.IsNullOrWhiteSpace(token.RefreshToken))
-                    {
-                        // Refresh token may not always be replaced.
-                        token.RefreshToken = config.Comms.AuthToken.RefreshToken;
-                    }
-
-                    config.Comms.AuthToken = token;
-                    config.WriteComms();
-
-                    webApi.TokenType = config.Comms.AuthToken.TokenType;
-                    webApi.AccessToken = config.Comms.AuthToken.AccessToken;
-                }
-                else
-                {
-                    MessageBox.Show($"Error refreshing token: {token.Error}\n\n{token.ErrorDescription}", "Auth Error");
-                }
+                OnTrackTimeChange?.Invoke(this, new TrackTimeChangeEventArgs(status.PlayPosition));
             }
-            
-            // ReSharper disable once PossibleLossOfFraction
-            tokenRefreshTimer.Change(
-                TimeSpan.FromSeconds(config.Comms.AuthToken.ExpiresIn / 2),
-                Timeout.InfiniteTimeSpan);
         }
     }
 }

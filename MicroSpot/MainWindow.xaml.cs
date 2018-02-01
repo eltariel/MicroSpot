@@ -74,9 +74,12 @@ namespace MicroSpot
             api = SpotifyApiFactory.GetSpotifyApi(config);
             api.Connect();
 
-            var status = api.GetStatus();
-            UpdatePlayState(status.IsPlaying);
-            UpdateDisplay(status.Track);
+            if (api.IsConnected)
+            {
+                var status = api.GetStatus();
+                UpdatePlayState(status.IsPlaying);
+                UpdateDisplay(status.Track);
+            }
 
             api.OnTrackChange += OnTrackChange;
             api.OnPlayStateChange += OnPlayStateChange;
